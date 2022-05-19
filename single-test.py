@@ -12,33 +12,33 @@ df_list = []
 path = "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/VEN184_Apple_backlog_2022_05_11 7.XLS"
 filename, file_extension = os.path.splitext(path)
 def read_to_df(path):
-    if file_extension.lower() == ".xlsx":
-        try:
 
-            data_frame = pd.read_excel(path, sheet_name=0, engine="openpyxl")
-            return data_frame
-        except:
-            "ERROR with .xlsx file"
-    elif file_extension.lower() == ".xls":
-        try:
-            book = xlrd.open_workbook(filename=path)
-            data_frame = pd.read_excel(book)
-            return data_frame
-        except:
-            pass
-        try:
-            data_frame = pd.read_csv(path, sep='\t', encoding='latin1')
-            return data_frame
-        except:
-            pass
+    try:
+        # .xlsx
+        data_frame = pd.read_excel(path, sheet_name=0, engine="openpyxl")
+        return data_frame
+    except:
+        pass
 
-    elif file_extension.lower() == ".txt":
+    try:
+        # .xls
+        book = xlrd.open_workbook(filename=path)
+        data_frame = pd.read_excel(book)
+        return data_frame
+    except:
+        pass
+    # txt/ csv
+    try:
         data_frame = pd.read_csv(path, sep='\t', encoding='latin1')
         return data_frame
-    elif file_extension.lower() == ".csv":
+    except:
+        pass
+    try:
         data_frame = pd.read_csv(path, sep=';', encoding='latin1')
         data_frame = data_frame.loc[:, ~data_frame.columns.str.contains('^Unnamed')]
         return data_frame
+    except:
+        return "Error"
 data_frame = read_to_df(path)
 
 part_num_names = ["Manufacturer Part Number", "PPN","Part"]# done
