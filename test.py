@@ -7,7 +7,8 @@ cols = ['Distributor Number', 'Reseller Name', 'Part Number', 'Description', 'Op
 path_list = ["/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/220511_APP_ORD-1.txt",
              "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/no_apple_backlog_norwegian_APRS.xlsx",
              "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/220511_APP_ORD-1.txt",
-             "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/Target AppleOrderBookAPRReport.xlsx"]
+             "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/Target AppleOrderBookAPRReport.xlsx",
+             "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/APPLE_B_A_2022-05-12.CSV"]
 df_list = []
 for path in path_list:
     filename, file_extension = os.path.splitext(path)
@@ -133,8 +134,6 @@ for path in path_list:
 
     data = fix_column_names(data_frame)
 
-
-
     def drop_extra_columns(data_frame):
         try:
             data_frame = data_frame[cols]
@@ -147,6 +146,11 @@ for path in path_list:
     finished = drop_extra_columns(data)
     df_list.append(finished)
 
+
+
+
+
 excl_merged = pd.concat(df_list, ignore_index=True)
+print(excl_merged)
 
 

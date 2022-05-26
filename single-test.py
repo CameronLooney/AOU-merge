@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 import xlrd
 cols = ['Distributor Number', 'Reseller Name', 'Part Number', 'Description', 'Open Qty',
@@ -9,7 +10,7 @@ path_list = ["/Users/cameronlooney/Downloads/220511_APP_ORD.txt","/Users/cameron
 df_list = []
 
 #path = "/Users/cameronlooney/Downloads/APPLE_B_A_2022-05-12.CSV"
-path = "/Users/cameronlooney/Downloads/Apple_APR_Backlog_Template_2022_05_13.xlsx"
+path = "/Users/cameronlooney/Documents/AOU Merge/AOU Merge Test Passed/Apple Backlog All_34_1896914398520070056.xlsx"
 
 filename, file_extension = os.path.splitext(path)
 def column_check(data_frame):
@@ -24,7 +25,7 @@ def read_to_df(path):
         # .xlsx
 
         data_frame = pd.read_excel(path, sheet_name=0, engine="openpyxl")
-        print(list(data_frame))
+
 
         return data_frame
     except:
@@ -65,6 +66,30 @@ required_date_names = ["ReqDelDate","Order Ending Date","End customer required d
 open_qty_names = ["Open Quantity","Qty open (SO)","Open Order Qty"]#done
 description_names = ["Product Description"]
 order_date_names = ["Created on","Date of order placement","order"]
+
+
+
+def remove_nans(df):
+    x = df.dropna(how = 'all', axis = 1)
+    x = x.dropna(how = 'all', axis = 0)
+    x = x.reset_index(drop = True)
+    return x
+
+'''
+headers = data_frame.iloc[0]
+print(headers)
+new_df  = pd.DataFrame(data_frame.values[1:], columns=headers)
+print(new_df)
+'''
+def empty_row_remove(data_frame):
+    data_frame = data_frame.dropna(axis=1, how='all')
+    if any("Unnamed" in x for x in list(data_frame)):
+        data_frame.rename(columns=data_frame.iloc[0], inplace = True)
+        data_frame.drop([0], inplace = True)
+        return data_frame
+    return data_frame
+data_frame = empty_row_remove(data_frame)
+
 def fix_column_names(data_frame):
     x = list(data_frame)
     for i in x:
@@ -123,17 +148,16 @@ def fix_column_names(data_frame):
             data_frame.rename(columns={i: 'Description'}, inplace=True)
     return data_frame
 
-data = fix_column_names(data_frame)
+data_frame = fix_column_names(data_frame)
 
 def drop_extra_columns(data_frame):
-    try:
-        data_frame = data_frame[cols]
-        print(list(data_frame))
-        return data_frame
-    except:
-        print("Missing Column")
 
-finished = drop_extra_columns(data)
+    data_frame = data_frame[cols]
+
+    return data_frame
+
+
+finished = drop_extra_columns(data_frame)
 print(finished)
 df_list.append(finished)
 
