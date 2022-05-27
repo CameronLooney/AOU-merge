@@ -21,6 +21,7 @@ with st.sidebar.header('1. Upload your ZIP file'):
 cols = ['Distributor Number', 'Reseller Name', 'Part Number', 'Description', 'Open Qty',
             'Order Date', 'Required Delivery Date']
 # if a file has been uploaded
+file_not_read = []
 if file_name is not None:
     # if the sidebar button is clicked
     if st.sidebar.button("Merge Files"):
@@ -40,6 +41,7 @@ if file_name is not None:
         def remove_MACOSX_files(list_of_files):
             # if path contains MACOSX drop it
             correct_list = [x for x in list_of_files if "MACOSX" not in x]
+            correct_list = [x for x in correct_list if "." in x]
             return correct_list
         path_list = remove_MACOSX_files(list_of_files)
         df_list = []
@@ -99,7 +101,8 @@ if file_name is not None:
                         data_frame = data_frame.drop('Order Ending Date', 1)
                     return data_frame
                 except:
-                    return "Error"
+                    file_not_read.append(path)
+                    return file_not_read
 
 
             data_frame = read_to_df(i)
