@@ -5,6 +5,7 @@ import streamlit as st
 import time
 import os
 import xlrd
+
 # Streamlit Title
 
 
@@ -19,15 +20,16 @@ with st.sidebar.header('1. Upload your ZIP file'):
 
 """)
 cols = ['Distributor Number', 'Reseller Name', 'Part Number', 'Description', 'Open Qty',
-            'Order Date', 'Required Delivery Date']
+        'Order Date', 'Required Delivery Date']
 # if a file has been uploaded
 file_not_read = []
 file_not_fixed = []
-failed = []
 if file_name is not None:
     # if the sidebar button is clicked
     if st.sidebar.button("Merge Files"):
         start = time.time()
+
+
         # unzip the uploaded files and get a list of the file paths
         def unzip():
 
@@ -39,22 +41,25 @@ if file_name is not None:
 
 
         archive, list_of_files = unzip()
+
+
         # when zipping on mac os it generates MACOSX files which need to be removed
         def remove_MACOSX_files(list_of_files):
             # if path contains MACOSX drop it
             correct_list = [x for x in list_of_files if "MACOSX" not in x]
+            correct_list = [x for x in correct_list if ".DS_Store" not in x]
             correct_list = [x for x in correct_list if "." in x]
             return correct_list
+
+
         path_list = remove_MACOSX_files(list_of_files)
         df_list = []
         file_not_read = []
+        files_failed = []
         for i in path_list:
-
-
 
             def read_to_df(path):
                 head, tail = os.path.split(path)
-
 
                 try:
                     # .xlsx
@@ -63,7 +68,6 @@ if file_name is not None:
                     data_frame = pd.read_excel(xl, sheet_name=0, engine="openpyxl")
 
                     # this is to catch ingrammicro template (has annotations in line 1)
-
 
                     return data_frame
                 except:
@@ -77,10 +81,8 @@ if file_name is not None:
 
                 try:
 
-
-
-                    book = xlrd.open_workbook(filename = path)
-
+                    book = xlrd.open_workbook(filename=path)
+                    st.write(book)
                     data_frame = pd.read_excel(book)
                     return data_frame
                 except:
@@ -89,7 +91,6 @@ if file_name is not None:
                 try:
                     xl = archive.open(path)
                     data_frame = pd.read_csv(xl, sep='\t', encoding='latin1')
-
 
                     if len(data_frame.columns) <= 6:
 
@@ -123,23 +124,17 @@ if file_name is not None:
             open_qty_names = ["Open Quantity", "Qty open (SO)", "Open Order Qty"]  # done
             description_names = ["Product Description"]
             order_date_names = ["Created on", "Date of order placement", "order"]
-            xx = ["ID","#"]
-
-
 
             try:
 
                 data_frame = data_frame.dropna(axis=1, how='all')
                 if any("Unnamed" in x for x in list(data_frame)):
-
                     data_frame.rename(columns=data_frame.iloc[0], inplace=True)
                     data_frame.drop([0], inplace=True)
 
 
-
             except:
                 pass
-
 
 
             def fix_column_names(data_frame):
@@ -158,13 +153,9 @@ if file_name is not None:
                     elif i.strip().lower() == 'distributor number':
                         data_frame.rename(columns={i: 'Distributor Number'}, inplace=True)
                     # reseller_names fix
-
-
                     if i in reseller_names and "#" not in i:
-
                         data_frame.rename(columns={i: 'Reseller Name'}, inplace=True)
-
-                    elif "reseller" in i.lower().strip() and "#" not in i:
+                    elif "reseller" in i.lower().strip()  and "#" not in i:
                         data_frame.rename(columns={i: 'Reseller Name'}, inplace=True)
                     elif i.strip().lower() == 'reseller name':
                         data_frame.rename(columns={i: 'Reseller Name'}, inplace=True)
@@ -207,7 +198,6 @@ if file_name is not None:
             data = fix_column_names(data_frame)
 
 
-
             def drop_extra_columns(data_frame):
                 try:
                     data_frame = data_frame[cols]
@@ -217,54 +207,64 @@ if file_name is not None:
                     return file_not_fixed.append(data_frame)
 
 
-
-
             finished = drop_extra_columns(data)
 
             try:
-                if len(finished.columns) !=7:
+                if len(finished.columns) != 7:
                     file_not_fixed.append(finished)
-                    failed.append(i)
-
-                    failed.append(i)
+                    files_failed.append(i)
                 elif len(finished.columns) == 7:
                     df_list.append(finished)
             except:
-                pass
+                files_failed.append(i)
+
+            # compare dataframe column headers to list and if element in list is missing from dataframe create an empty column in the same position
 
 
-        excl_merged = pd.concat(df_list, ignore_index=True)
+        try:
+            excl_merged = pd.concat(df_list, ignore_index=True)
+            excl_merged = excl_merged.drop_duplicates(keep='first')
+            st.success("Merger was sucessfully completed")
+        except:
+            st.error("Error: The merge was not completed")
+
+        if len(files_failed)>0:
+            st.error("The following files were not read properly:")
+            st.write(files_failed)
+
 
 
         def excel(excl_merged):
-                import io
-                buffer = io.BytesIO()
-                writer = pd.ExcelWriter(buffer, date_format='yyyy-mm-dd',datetime_format='yyyy-mm-dd')
+            import io
+            buffer = io.BytesIO()
+            writer = pd.ExcelWriter(buffer, date_format='yyyy-mm-dd', datetime_format='yyyy-mm-dd')
 
-                excl_merged.to_excel(writer, index=False)
-                worksheet = writer.sheets['Sheet1']
+            excl_merged.to_excel(writer, index=False)
+            worksheet = writer.sheets['Sheet1']
 
-                # Get the dimensions of the dataframe.
-                (max_row, max_col) = excl_merged.shape
+            # Get the dimensions of the dataframe.
+            (max_row, max_col) = excl_merged.shape
 
-                # Set the column widths, to make the dates clearer.
-                worksheet.set_column(1, max_col, 20)
-                writer.save()
-                return buffer
+            # Set the column widths, to make the dates clearer.
+            worksheet.set_column(1, max_col, 20)
+            writer.save()
+            return buffer
+
+
         to_excel = excel(excl_merged)
+
+
         def download(buffer):
-                st.download_button(
-                    label="Download Excel worksheets",
-                    data=buffer,
-                    file_name="Merged.xlsx",
-                    mime="application/vnd.ms-excel"
-                )
+            st.download_button(
+                label="Download Excel worksheets",
+                data=buffer,
+                file_name="Merged.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+
+
         download(to_excel)
 
         end = time.time()
         time_taken = (end - start)
-
-
-
-
 

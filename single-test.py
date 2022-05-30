@@ -159,6 +159,7 @@ def drop_extra_columns(data_frame):
 
 finished = drop_extra_columns(data_frame)
 print(finished)
+print(len(finished.columns))
 df_list.append(finished)
 
 
